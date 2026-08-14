@@ -296,7 +296,7 @@ The investigation established that the firmware was reaching and configuring the
 
 Rather than treating the simulator warning as proof of a firmware defect, I isolated the UART reception path using interrupts. This allowed the remainder of the bootloader to be tested independently.
 
-This was an important debugging outcome: the DMA problem was isolated from the rest of the bootloader rather than allowed to obscure whether the bootloader architecture itself was functioning.
+This was an important debugging outcome: The DMA-based UART receive path could not be conclusively validated under the current Renode configuration. Register-level investigation showed that the firmware reached and configured the DMA subsystem, but simulator warnings around DMA stream configuration and interrupt/status fields prevented the complete receive path from being verified. The interrupt-driven UART implementation was therefore used as an independent validation path for the remainder of the bootloader. Validation of DMA reception on physical STM32F407 hardware remains future work.
 
 ---
 
