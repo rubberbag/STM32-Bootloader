@@ -27,7 +27,6 @@ flowchart LR
 ---
 
 ## Boot flow
-
 ```mermaid
 flowchart TD
     A[Reset] --> B[Initialize clocks, GPIO, UART, flash]
