@@ -196,7 +196,7 @@ A significant part of the project involved debugging the system at the register 
 The firmware was compiled with debug symbols and connected to the Renode GDB server:
 
 ```text
-arm-none-eabi-gcc
+  gdb-multiarch 
         │
         ▼
   bootloader.elf
