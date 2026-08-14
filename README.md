@@ -441,7 +441,7 @@ The application was also successfully executed when the bootloader and applicati
  - [x] Register-level debugging with GDB
 
  #### Under Investigation
- - [] Full DMA-based UART reception under Renode
+ - [ ] Full DMA-based UART reception under Renode
 
 The remaining DMA issue is specifically associated with the simulator's DMA peripheral model. The interrupt-driven UART path was used to isolate and verify the rest of the update mechanism.
 
