@@ -7,7 +7,6 @@ typedef struct
 {
     uint32_t magic;
     uint32_t image_size;
-    uint32_t crc;
     uint32_t version;
 }ImageHeader_t;
 

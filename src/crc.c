@@ -2,10 +2,10 @@
 #include "header.h"
 #include <stdint.h>
 
+
 uint32_t CRC_Calculate(uint8_t *data, uint32_t size)
 {
     uint32_t crc = 0xFFFFFFFF;
-
 
     for(uint32_t i = 0; i < size; i++)
     {
@@ -20,5 +20,5 @@ uint32_t CRC_Calculate(uint8_t *data, uint32_t size)
         }
     }
 
-    return crc;
+    return crc ^ 0xFFFFFFFF;
 }

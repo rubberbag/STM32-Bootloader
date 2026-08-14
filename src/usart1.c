@@ -2,7 +2,7 @@
 #include "usart1.h"
 
 #define UART_BAUD 0x008B
-#define RX_BUFFER_SIZE 256U
+#define RX_BUFFER_SIZE 2048U
 
 uint8_t rx_Buffer[RX_BUFFER_SIZE];
 

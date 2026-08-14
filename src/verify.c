@@ -1,7 +1,8 @@
 #include "verify.h"
 #include "memory_map.h"
 #include "header.h"
-#include "crc.h"
+#include "crc.h" 
+
 
 uint8_t ProgramIsValid(void)
 {
@@ -32,7 +33,7 @@ uint8_t ProgramIsValid(void)
     }
 
 
-    if((reset & 1) == 0)
+    if((reset & 1U) == 0U)
     {
         return 0;
     }
@@ -41,21 +42,19 @@ uint8_t ProgramIsValid(void)
     return 1;
 }
 
-uint8_t CRC_Check_OK(void)
+uint8_t CRC_Check_OK(uint32_t receivedCRC)
 {
     const ImageHeader_t *header;
 
     header = HeaderGet();
     
-    uint32_t calculated;
 
-    calculated = CRC_Calculate(
-        (uint8_t*)PROGRAM_ADDRESS,
-        header->image_size
-    );
+    uint32_t total_size = sizeof(ImageHeader_t) + header->image_size;
+
+    uint32_t calculated = CRC_Calculate((uint8_t*)PROGRAM_ADDRESS, total_size);
 
 
-    if(calculated == header->crc)
+    if(calculated == receivedCRC)
     {
         return 1;
     }
