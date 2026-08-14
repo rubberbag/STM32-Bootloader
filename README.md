@@ -394,7 +394,7 @@ renode run.resc
 ## Testing
 The project was tested using:
 
-- arm-none-eabi-gcc
+- gdb-multiarch 
 - GDB
 - Renode
 - a host-side UART test
