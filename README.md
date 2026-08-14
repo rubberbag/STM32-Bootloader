@@ -508,6 +508,23 @@ Validation of the DMA path on physical STM32F407 hardware would be the natural n
 
 ---
 
+## Future Work
+
+The current implementation focuses on the core firmware update path and was validated primarily in the Renode development environment.
+
+Future work includes:
+
+- [ ] Validate DMA-based UART reception on physical STM32F407 hardware
+- [ ] Implement power-loss-safe firmware updates
+- [ ] Add rollback or dual-image firmware support
+- [ ] Add firmware authentication/signature verification
+- [ ] Add additional fault-injection and recovery testing
+- [ ] Validate the complete bootloader on physical hardware
+
+These features were not included in the current scope because the project was developed and validated primarily in simulation. Physical hardware validation would provide the next step for testing DMA behavior and more advanced firmware update and recovery mechanisms.
+
+---
+
 ## Build
 
 ```bash
