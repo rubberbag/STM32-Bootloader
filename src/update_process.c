@@ -25,6 +25,9 @@ static uint32_t headerSize = sizeof(ImageHeader_t);
 static uint32_t FlagAddress = UPDATE_FLAG_ADDRESS; 
 
 
+static uint8_t crcBuffer[4];
+static uint8_t crcBytesReceived = 0;
+
 
 void UpdateProcess(uint8_t *data, uint16_t length)
 {
@@ -37,13 +40,14 @@ void UpdateProcess(uint8_t *data, uint16_t length)
     {
         const ImageHeader_t *header = HeaderGet();
         
-        if(header->image_size <= PROGRAM_FLASH_SIZE)
+        if( sizeof(ImageHeader)+header->image_size <= PROGRAM_FLASH_SIZE)
         {
             uint32_t flagValue = UPDATE_FLAG_VALUE;
 
-            FlashWriteAtAddress(FlagAddress,(uint8_t*)&flagValue, 4); 
-            
             FlashEraseProgram();
+            
+            FlashWriteAtAddress(FlagAddress,(uint8_t*)&flagValue, 4); 
+        
             bytesReceived = 0;
             FlashWrite((uint8_t*)header, headerSize);
             
@@ -89,18 +93,26 @@ void UpdateProcess(uint8_t *data, uint16_t length)
 
     case UPDATE_RECEIVE_CRC:
     {
+        uint16_t i = 0;
 
-        if(length >= 4)
+        while (i < length && crcBytesReceived < 4)
         {
-            receivedCRC = (uint32_t)data[0] << 24 |
-                           (uint32_t)data[1] << 16 |
-                           (uint32_t)data[2] << 8  |
-                           (uint32_t)data[3];
+            crcBuffer[crcBytesReceived++] = data[i++];
+        }
+
+        if (crcBytesReceived == 4)
+        {
+            receivedCRC = (uint32_t)crcBuffer[0]
+                        | ((uint32_t)crcBuffer[1] << 8)
+                        | ((uint32_t)crcBuffer[2] << 16)
+                        | ((uint32_t)crcBuffer[3] << 24);
 
             updateState = UPDATE_VERIFY;
         }
+
         break;
-    }
+     }
+
 
 
     case UPDATE_VERIFY:
