@@ -40,7 +40,7 @@ void UpdateProcess(uint8_t *data, uint16_t length)
     {
         const ImageHeader_t *header = HeaderGet();
         
-        if( sizeof(ImageHeader)+header->image_size <= PROGRAM_FLASH_SIZE)
+        if( sizeof(ImageHeader_t)+header->image_size <= PROGRAM_FLASH_SIZE)
         {
             uint32_t flagValue = UPDATE_FLAG_VALUE;
 
@@ -49,6 +49,8 @@ void UpdateProcess(uint8_t *data, uint16_t length)
             FlashWriteAtAddress(FlagAddress,(uint8_t*)&flagValue, 4); 
         
             bytesReceived = 0;
+            crcBytesReceived = 0;
+
             FlashWrite((uint8_t*)header, headerSize);
             
             updateState = UPDATE_RECEIVE_PAYLOAD;
@@ -106,9 +108,9 @@ void UpdateProcess(uint8_t *data, uint16_t length)
                         | ((uint32_t)crcBuffer[1] << 8)
                         | ((uint32_t)crcBuffer[2] << 16)
                         | ((uint32_t)crcBuffer[3] << 24);
-
-            updateState = UPDATE_VERIFY;
         }
+        
+        updateState = UPDATE_VERIFY;
 
         break;
      }
