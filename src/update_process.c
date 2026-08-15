@@ -64,56 +64,69 @@ void UpdateProcess(uint8_t *data, uint16_t length)
 
 
     case UPDATE_RECEIVE_PAYLOAD:
-    {
+{
         const ImageHeader_t *header = HeaderGet();
 
         uint32_t remaining = header->image_size - bytesReceived;
 
-        if(length > remaining)
-        {
-            length = remaining;
-        }
+        uint16_t payloadLength;
 
-        if(FlashWrite(data, length))
+        if (length <= remaining)
         {
-            bytesReceived += length;
-
-            if(bytesReceived >= header->image_size)
-            {
-                updateState = UPDATE_RECEIVE_CRC;
-            }
+            payloadLength = length;
         }
         else
         {
+            payloadLength = (uint16_t) remaining;
+        }
+    
+        if (payloadLength > 0)
+        {
+            if (!FlashWrite(data, payloadLength))
+            {
+                updateState = UPDATE_ERROR;
+                break;
+            }
 
-            updateState = UPDATE_ERROR;
+            bytesReceived += payloadLength;
+         }
+
+    
+        if (bytesReceived >= header->image_size)
+        {
+            updateState = UPDATE_RECEIVE_CRC;
+
+        /*
+         * Anything after the payload belongs to CRC.
+         */
+            if (length > payloadLength)
+            {
+                uint16_t crcLength = length - payloadLength;
+
+                uint16_t i = 0;
+
+                while (i < crcLength && crcBytesReceived < 4)
+                {
+                    crcBuffer[crcBytesReceived++] = data[payloadLength + i];
+
+                    i++;
+                }
+
+                if (crcBytesReceived == 4)
+                {
+                    receivedCRC = (uint32_t)crcBuffer[0]
+                                | ((uint32_t)crcBuffer[1] << 8)
+                                | ((uint32_t)crcBuffer[2] << 16)
+                                | ((uint32_t)crcBuffer[3] << 24);
+
+                    updateState = UPDATE_VERIFY;
+                }
+            }
         }
 
         break;
     }
 
-
-    case UPDATE_RECEIVE_CRC:
-    {
-        uint16_t i = 0;
-
-        while (i < length && crcBytesReceived < 4)
-        {
-            crcBuffer[crcBytesReceived++] = data[i++];
-        }
-
-        if (crcBytesReceived == 4)
-        {
-            receivedCRC = (uint32_t)crcBuffer[0]
-                        | ((uint32_t)crcBuffer[1] << 8)
-                        | ((uint32_t)crcBuffer[2] << 16)
-                        | ((uint32_t)crcBuffer[3] << 24);
-        }
-        
-        updateState = UPDATE_VERIFY;
-
-        break;
-     }
 
 
 
