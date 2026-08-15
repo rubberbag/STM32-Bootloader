@@ -77,6 +77,8 @@ Flash
 
 ```
 
+Metadata storage is currently provisional. A dedicated Flash sector will be allocated for persistent update metadata in the hardware-oriented implementation. The current implementation uses a temporary address to exercise the update-state mechanism.
+
 ---
 
 ## Firmware image format
