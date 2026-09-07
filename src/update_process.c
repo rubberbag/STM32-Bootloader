@@ -35,162 +35,161 @@ void UpdateProcess(uint8_t *data, uint16_t length)
     switch(updateState)
     {
 
-    case UPDATE_WAIT_HEADER:
-    if(HeaderReceived(data, length))
-    {
-        const ImageHeader_t *header = HeaderGet();
-        
-        if( sizeof(ImageHeader_t)+header->image_size <= PROGRAM_FLASH_SIZE)
+        case UPDATE_WAIT_HEADER:
+        if(HeaderReceived(data, length))
         {
-            uint32_t flagValue = UPDATE_FLAG_VALUE;
-
-            FlashEraseProgram();
+            const ImageHeader_t *header = HeaderGet();
             
-            FlashWriteAtAddress(FlagAddress,(uint8_t*)&flagValue, 4); 
-        
-            bytesReceived = 0;
-            crcBytesReceived = 0;
+            if( sizeof(ImageHeader_t)+header->image_size <= PROGRAM_FLASH_SIZE)
+            {
+                uint32_t flagValue = UPDATE_FLAG_VALUE;
 
-            FlashWrite((uint8_t*)header, headerSize);
+                FlashEraseProgram();
+                
+                FlashWriteAtAddress(FlagAddress,(uint8_t*)&flagValue, 4); 
             
-            updateState = UPDATE_RECEIVE_PAYLOAD;
-        }
-        else
-        {
-            updateState = UPDATE_ERROR;
-        }
-    }
-    break;
+                bytesReceived = 0;
+                crcBytesReceived = 0;
 
-    }
-
-
-    case UPDATE_RECEIVE_PAYLOAD:
-    {
-        const ImageHeader_t *header = HeaderGet();
-
-        uint32_t remaining = header->image_size - bytesReceived;
-
-        uint16_t payloadLength;
-
-        if (length <= remaining)
-        {
-            payloadLength = length;
-        }
-        else
-        {
-            payloadLength = (uint16_t) remaining;
-        }
-    
-        if (payloadLength > 0)
-        {
-            if (!FlashWrite(data, payloadLength))
+                FlashWrite((uint8_t*)header, headerSize);
+                
+                updateState = UPDATE_RECEIVE_PAYLOAD;
+            }
+            else
             {
                 updateState = UPDATE_ERROR;
-                break;
-            }
-
-            bytesReceived += payloadLength;
-         }
-
-    
-        if (bytesReceived >= header->image_size)
-        {
-            updateState = UPDATE_RECEIVE_CRC;
-
-        /*
-         * Anything after the payload belongs to CRC.
-         */
-            if (length > payloadLength)
-            {
-                uint16_t crcLength = length - payloadLength;
-
-                uint16_t i = 0;
-
-                while (i < crcLength && crcBytesReceived < 4)
-                {
-                    crcBuffer[crcBytesReceived++] = data[payloadLength + i];
-
-                    i++;
-                }
-
-                if (crcBytesReceived == 4)
-                {
-                    receivedCRC = (uint32_t)crcBuffer[0]
-                                | ((uint32_t)crcBuffer[1] << 8)
-                                | ((uint32_t)crcBuffer[2] << 16)
-                                | ((uint32_t)crcBuffer[3] << 24);
-
-                    updateState = UPDATE_VERIFY;
-                }
             }
         }
-
         break;
-    }
-
-
-case UPDATE_RECEIVE_CRC:
-{
-    uint16_t i = 0;
-
-    while (i < length && crcBytesReceived < 4)
-    {
-        crcBuffer[crcBytesReceived++] = data[i++];
-    }
-
-    if (crcBytesReceived == 4)
-    {
-        receivedCRC = (uint32_t)crcBuffer[0]
-                    | ((uint32_t)crcBuffer[1] << 8)
-                    | ((uint32_t)crcBuffer[2] << 16)
-                    | ((uint32_t)crcBuffer[3] << 24);
-
-        updateState = UPDATE_VERIFY;
-    }
-
-    break;
-}
-
         
 
-    case UPDATE_VERIFY:
 
-        if(CRC_Check_OK(receivedCRC))
+        case UPDATE_RECEIVE_PAYLOAD:
         {
-            updateState = UPDATE_FINISHED;
+            const ImageHeader_t *header = HeaderGet();
+
+            uint32_t remaining = header->image_size - bytesReceived;
+
+            uint16_t payloadLength;
+
+            if (length <= remaining)
+            {
+                payloadLength = length;
+            }
+            else
+            {
+                payloadLength = (uint16_t) remaining;
+            }
+        
+            if (payloadLength > 0)
+            {
+                if (!FlashWrite(data, payloadLength))
+                {
+                    updateState = UPDATE_ERROR;
+                    break;
+                }
+
+                bytesReceived += payloadLength;
+            }
+
+        
+            if (bytesReceived >= header->image_size)
+            {
+                updateState = UPDATE_RECEIVE_CRC;
+
+            /*
+            * Anything after the payload belongs to CRC.
+            */
+                if (length > payloadLength)
+                {
+                    uint16_t crcLength = length - payloadLength;
+
+                    uint16_t i = 0;
+
+                    while (i < crcLength && crcBytesReceived < 4)
+                    {
+                        crcBuffer[crcBytesReceived++] = data[payloadLength + i];
+
+                        i++;
+                    }
+
+                    if (crcBytesReceived == 4)
+                    {
+                        receivedCRC = (uint32_t)crcBuffer[0]
+                                    | ((uint32_t)crcBuffer[1] << 8)
+                                    | ((uint32_t)crcBuffer[2] << 16)
+                                    | ((uint32_t)crcBuffer[3] << 24);
+
+                        updateState = UPDATE_VERIFY;
+                    }
+                }
+            }
+
+            break;
         }
-        else
+
+
+        case UPDATE_RECEIVE_CRC:
         {
+            uint16_t i = 0;
+
+            while (i < length && crcBytesReceived < 4)
+            {
+                crcBuffer[crcBytesReceived++] = data[i++];
+            }
+
+            if (crcBytesReceived == 4)
+            {
+                receivedCRC = (uint32_t)crcBuffer[0]
+                            | ((uint32_t)crcBuffer[1] << 8)
+                            | ((uint32_t)crcBuffer[2] << 16)
+                            | ((uint32_t)crcBuffer[3] << 24);
+
+                updateState = UPDATE_VERIFY;
+            }
+
+            break;
+        }
+
+            
+
+        case UPDATE_VERIFY:
+
+            if(CRC_Check_OK(receivedCRC))
+            {
+                updateState = UPDATE_FINISHED;
+            }
+            else
+            {
+
+                updateState = UPDATE_ERROR;
+            }
+
+            break;
+
+
+        case UPDATE_FINISHED:
+        {
+            uint32_t flagValue = UPDATE_VALID_VALUE;
+
+            FlashWriteAtAddress(FlagAddress,(uint8_t*)&flagValue, 4);
+
+            NVIC_SystemReset();
+        }
+        break;
+
+
+        case UPDATE_ERROR:
+
+            while(1);
+
+            break;
+
+
+        default:
 
             updateState = UPDATE_ERROR;
-        }
 
-        break;
-
-
-    case UPDATE_FINISHED:
-    {
-        uint32_t flagValue = UPDATE_VALID_VALUE;
-
-        FlashWriteAtAddress(FlagAddress,(uint8_t*)&flagValue, 4);
-
-        NVIC_SystemReset();
-    }
-    break;
-
-
-    case UPDATE_ERROR:
-
-        while(1);
-
-        break;
-
-
-    default:
-
-        updateState = UPDATE_ERROR;
-
-        break;
+            break;
     }
 }
